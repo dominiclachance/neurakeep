@@ -1,24 +1,28 @@
-export type RouteName = "graph" | "search" | "inbox" | "proposals" | "connect" | "activity" | "quality" | "settings";
+export type RouteName =
+  "graph" | "universe" | "search" | "inbox" | "proposals" | "connect" | "activity" | "quality" | "settings";
 
 export interface GraphNode {
   id: string;
   label: string;
-  type: "root" | "source" | "section" | "event" | "fact" | "failure";
+  type: "root" | "cluster" | "source" | "section" | "event" | "decision" | "fact" | "failure";
   space?: string;
   trustLevel?: string;
   sensitivity?: string;
+  count?: number;
+  remaining?: number;
+  degree?: number;
 }
 
 export interface GraphEdge {
   from: string;
   to: string;
-  type: "root" | "contains" | "cites" | "next";
+  type: "root" | "cluster" | "contains" | "cites" | "next";
 }
 
 export interface GraphState {
   mode?: string;
   layoutMode?: "graph" | "tree";
-  clusterBy?: string;
+  clusterBy?: "type" | "space" | "trust" | "sensitivity";
   edgeTypes?: string[];
   layout?: Record<string, { x: number; y: number; pinned?: boolean }>;
   pinned?: string[];

@@ -4,11 +4,12 @@ test("NeuraKeep routed React app core flows", async ({ page }) => {
   await page.goto("/index.html");
   await expect(page.getByRole("heading", { name: "NeuraKeep", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
-  await expect(page.getByTestId("graph-svg")).toBeVisible();
+  await expect(page.getByText("Explore", { exact: true })).toBeVisible();
+  await expect(page.getByText("Workflow", { exact: true })).toBeVisible();
+  await expect(page.getByText("System", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("sigma-graph")).toBeVisible();
   await expect(page.locator(".toolbar input")).toHaveValue("");
-  await page.getByRole("button", { name: "Tree" }).click();
-  await expect(page.getByRole("button", { name: "Tree" })).toHaveClass(/activeControl/);
-  await expect(page.locator(".graphSavedPanel")).toBeVisible();
+  await expect(page.getByText("Keyboard node list")).toBeVisible();
   await page.screenshot({ path: "test-results/neurakeep-graph-react.png", fullPage: true });
 
   await page.locator(".toolbar input").fill("NeuraKeep");
@@ -54,7 +55,7 @@ test("routes stay viewport locked with no minimap", async ({ page }) => {
   await page.goto("/index.html#graph");
 
   const routes = [
-    { hash: "graph", marker: '[data-testid="graph-svg"]' },
+    { hash: "graph", marker: '[data-testid="sigma-graph"]' },
     { hash: "search", marker: 'h2:has-text("Search")' },
     { hash: "inbox", marker: 'h2:has-text("Inbox")' },
     { hash: "proposals", marker: 'h2:has-text("Proposal Inbox")' },

@@ -1,0 +1,347 @@
+.sigmaGraph {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  background: var(--canvas);
+  overflow: hidden;
+}
+.sigmaGraph .react-sigma,
+.sigmaGraph .sigma-container {
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(circle at 52% 45%, rgba(115, 199, 174, 0.055), transparent 34%),
+    radial-gradient(circle at 50% 50%, transparent 46%, rgba(0, 0, 0, 0.2) 100%);
+}
+.sigmaGraph .react-sigma-control button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  line-height: 0;
+}
+.sigmaGraph .react-sigma-control button svg {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0;
+}
+.sigmaGraph .react-sigma-control button:hover,
+.sigmaGraph .react-sigma-control button:focus-visible {
+  border-color: var(--accent);
+  background: var(--control-hover);
+}
+.graphState {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  padding: 40px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(75, 159, 136, 0.16), transparent 34%),
+    #111315;
+  text-align: center;
+}
+.graphState > div {
+  width: min(520px, 100%);
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(23, 26, 29, 0.94);
+  box-shadow: 0 24px 70px #0007;
+}
+.graphStateKicker {
+  color: #73c7ae;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.graphState h2 {
+  margin: 10px 0 8px;
+  font-size: clamp(26px, 4vw, 40px);
+}
+.graphState p {
+  margin: 0 auto 22px;
+  max-width: 44ch;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.graphState button {
+  padding: 10px 16px;
+  border: 1px solid #73c7ae;
+  border-radius: 7px;
+  background: #2f6f5e;
+  color: #fff;
+  font-weight: 700;
+}
+.graphStateError {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 107, 107, 0.12), transparent 34%),
+    #111315;
+}
+.graphStateError .graphStateKicker {
+  color: #ff8d8d;
+}
+.sigmaToolbar {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #343a40;
+  border-radius: 7px;
+  background: rgba(20, 23, 26, 0.94);
+  font-size: 12.5px;
+}
+.sigmaToolbar label,
+.sigmaToolbar form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.graphLocate {
+  position: relative;
+}
+.sigmaToolbar span {
+  margin-left: auto;
+  color: #aab2ba;
+  font-size: 12px;
+}
+.graphBreadcrumbs {
+  position: absolute;
+  z-index: 4;
+  top: 66px;
+  left: 14px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.graphBreadcrumbs button {
+  border: 0;
+  background: #242a2f;
+  font-size: 12px;
+}
+.graphMatches {
+  position: absolute;
+  z-index: 8;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(420px, 52vw);
+  max-height: min(360px, calc(100vh - 150px));
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  box-shadow: 0 18px 48px #000a;
+  padding: 6px;
+}
+.graphMatches button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 9px;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+.graphMatches button + button {
+  border-top-color: #2b343b;
+}
+.graphMatches button:hover,
+.graphMatches button[aria-selected="true"] {
+  border-color: #4b9f88;
+  background: #20332e;
+}
+.graphMatches small {
+  overflow: hidden;
+  color: #8f9ca7;
+  font-size: 10px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.graphMatchesEmpty {
+  padding: 14px;
+  color: #aab2ba;
+  font-size: 12px;
+}
+.sigmaToolbar button.secondary {
+  border-color: transparent;
+}
+.sigmaToolbar button.secondary:hover:not(:disabled),
+.sigmaToolbar button.secondary:focus-visible {
+  border-color: var(--border-strong);
+}
+.graphContext {
+  position: fixed;
+  z-index: 20;
+  display: grid;
+  gap: 3px;
+  padding: 5px;
+  background: #20252a;
+  border: 1px solid #66717b;
+  box-shadow: 0 8px 28px #0009;
+}
+.graphMore {
+  position: absolute;
+  z-index: 5;
+  right: 18px;
+  top: 72px;
+}
+.graphFallback {
+  padding: 28px;
+  overflow: auto;
+}
+.graphFallback ul {
+  list-style: none;
+  padding: 0;
+  columns: 3;
+}
+.graphFallback li {
+  break-inside: avoid;
+  margin: 4px;
+}
+.graphKeyboardList {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  bottom: 12px;
+  max-width: 360px;
+  max-height: 210px;
+  overflow: auto;
+  padding: 5px 8px;
+  background: #1b2024e8;
+  border: 1px solid #48515a;
+  border-radius: 5px;
+}
+.graphPhysics {
+  position: absolute;
+  z-index: 5;
+  right: 14px;
+  top: 70px;
+  width: 230px;
+  padding: 6px 8px;
+  background: #1b2024e8;
+  border: 1px solid #48515a;
+  border-radius: 5px;
+}
+.graphPhysics label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  font-size: 12px;
+}
+.graphPhysics input {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.graphPresets {
+  display: flex;
+  gap: 4px;
+}
+.graphKeyboardList summary {
+  cursor: pointer;
+  font-size: 12px;
+}
+.graphKeyboardList div {
+  display: grid;
+  gap: 3px;
+  padding-top: 5px;
+}
+.graphKeyboardList button {
+  text-align: left;
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sigmaGraph * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+.universeView {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  background: #111315;
+  overflow: hidden;
+}
+@media (max-width: 860px) {
+  .sigmaToolbar {
+    flex-wrap: wrap;
+    max-height: 124px;
+    overflow: auto;
+  }
+  .sigmaToolbar span {
+    margin-left: 0;
+  }
+  .graphBreadcrumbs {
+    top: 138px;
+  }
+  .graphPhysics,
+  .graphMore {
+    top: 138px;
+  }
+  .sigmaGraph,
+  .universeView {
+    min-height: 480px;
+  }
+}
+.universeCanvas {
+  width: 100%;
+  height: 100%;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.universeBanner {
+  position: absolute;
+  z-index: 5;
+  top: 66px;
+  left: 12px;
+  padding: 6px 10px;
+  background: #6a4d16;
+  border-radius: 4px;
+}
+.universeTooltip {
+  position: absolute;
+  z-index: 7;
+  left: 16px;
+  bottom: 16px;
+  display: grid;
+  padding: 8px 12px;
+  background: #20252aef;
+  border: 1px solid #58636d;
+}
+.universePanel {
+  position: absolute;
+  z-index: 7;
+  right: 14px;
+  top: 74px;
+  width: 260px;
+  max-height: 70%;
+  overflow: auto;
+  padding: 12px;
+  background: #1b2024ed;
+  border: 1px solid #58636d;
+}
+.universePanel.review {
+  left: 14px;
+  right: auto;
+  top: 102px;
+}
