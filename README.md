@@ -11,7 +11,8 @@ a shared, source-cited memory layer that runs on your own machine.
 - Preserves raw sources and extracts cited memory proposals
 - Lets you review memory before it becomes durable
 - Searches across sources, facts, events, failures, and decisions
-- Shows a graph of related memory with progressive expansion
+- Organizes the local app into grouped Explore, Workflow, and System navigation
+- Shows a Sigma knowledge graph with progressive expansion, clustering, search, keyboard access, and saved layouts
 - Exposes MCP tools for agents:
   - `memory_search`
   - `memory_read`
@@ -111,6 +112,7 @@ team spaces, remote connectors, shared storage, backups, and administration. See
 - [Manual Imports](docs/MANUAL_IMPORTS.md)
 - [MCP Integrations](docs/MCP_INTEGRATIONS.md)
 - [Open Source Core](docs/OPEN_SOURCE.md)
+- [Public Package Boundary](OSS_PACKAGE.md)
 
 ## Development Checks
 

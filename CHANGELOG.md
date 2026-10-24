@@ -4,17 +4,20 @@
 
 ### Added
 
-- Added the grouped Explore, Workflow, and System workspace navigation.
-- Added the Sigma and Graphology working graph with progressive expansion, clustering, search, keyboard access, and saved layouts.
+- You can now move through the local app using grouped Explore, Workflow, and System navigation.
+- You can explore related memory in a Sigma knowledge graph with progressive expansion, clustering, search, keyboard access, and saved layouts.
+
+### For contributors
+
 - Added regression coverage for the modern interface, graph branch collapse, responsive controls, and hosted-auth response compatibility.
 
 ### Changed
 
-- Made the Sigma working graph the default while preserving the legacy graph override.
-- Published only working OSS graph capabilities; the incomplete Universe experiment remains excluded.
-- Aligned the CLI, MCP server card, package manifest, and registry metadata on version 0.3.3.
+- The Sigma knowledge graph is now the default, while the legacy graph remains available as an override.
+- The public package includes only working graph capabilities; the incomplete Universe experiment remains excluded.
+- The CLI, MCP server card, package manifest, and registry metadata now consistently report version 0.3.3.
 
 ### Fixed
 
-- Fixed stale graph requests, nested branch cursors, rejected UI actions, narrow-desktop toolbar clipping, and stale context-menu crashes.
-- Restored the public Firebase response contract and removed private workspace-specific UI strings.
+- Graph interactions now handle stale requests, nested branch cursors, rejected actions, narrow-desktop toolbars, and obsolete context menus safely.
+- Hosted-auth controls once again use the public Firebase response contract, and private workspace-specific strings no longer appear in the package.
