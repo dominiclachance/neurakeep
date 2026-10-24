@@ -2731,8 +2731,7 @@ function authSettings(paths: VaultPaths, options: HttpMcpServerOptions, actor: H
     endpoint: "/mcp",
     flags: {
       graph: {
-        engine: process.env.NEURAKEEP_FLAG_GRAPH_ENGINE === "legacy" ? "legacy" : "sigma",
-        universe: ["1", "true"].includes((process.env.NEURAKEEP_FLAG_GRAPH_UNIVERSE ?? "").toLowerCase())
+        engine: process.env.NEURAKEEP_FLAG_GRAPH_ENGINE === "legacy" ? "legacy" : "sigma"
       }
     },
     hosted: hostedStatus(options, actor, db),

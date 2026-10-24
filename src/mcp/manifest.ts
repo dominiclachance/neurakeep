@@ -1,4 +1,4 @@
-export const NEURAKEEP_VERSION = "0.3.2";
+export const NEURAKEEP_VERSION = "0.3.3";
 
 export const NEURAKEEP_SERVER_INFO = {
   name: "neurakeep",

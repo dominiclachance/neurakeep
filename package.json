@@ -1,6 +1,6 @@
 {
   "name": "neurakeep",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "NeuraKeep: local-first, source-cited memory for AI agents.",
   "type": "module",
   "bin": {
@@ -38,7 +38,6 @@
     "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
-    "@cosmos.gl/graph": "^3.5.1",
     "@playwright/test": "^1.61.1",
     "@react-sigma/core": "^6.0.0",
     "@react-sigma/layout-forceatlas2": "^6.0.0",
@@ -48,7 +47,6 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "graphology": "^0.26.0",
-    "graphology-layout": "^0.6.1",
     "graphology-layout-forceatlas2": "^0.10.1",
     "graphology-layout-noverlap": "^0.4.2",
     "graphology-types": "^0.24.8",

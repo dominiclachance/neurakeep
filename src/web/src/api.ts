@@ -3,20 +3,20 @@ import type { GraphOverview, NeighborPage } from "./graph/GraphModel.js";
 
 export interface AuthSettings {
   mode: "local" | "remote";
-  provider?: "local" | "managedIdentity" | "service_token";
+  provider?: "local" | "firebase" | "service_token";
   tokenRequired: boolean;
-  managedIdentityRequired?: boolean;
+  firebaseRequired?: boolean;
   readOnly: boolean;
   hasToken: boolean;
   serviceTokenConfigured?: boolean;
   endpoint: string;
   flags?: {
-    graph: { engine: "legacy" | "sigma"; universe: boolean };
+    graph: { engine: "legacy" | "sigma" };
   };
   hosted?: {
     enabled: boolean;
     authProvider: string;
-    managedIdentityProjectId: string | null;
+    firebaseProjectId: string | null;
     serviceTokenConfigured?: boolean;
     serviceTokenCount?: number;
     betaAccess?: {

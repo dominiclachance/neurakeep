@@ -74,13 +74,13 @@ export default function GraphView({
   const [matches, setMatches] = useState<GraphNode[]>([]);
   const [matchesOpen, setMatchesOpen] = useState(false);
   const [activeMatchIndex, setActiveMatchIndex] = useState(-1);
-  const [depth, setDepth] = useState(1);
   const [physics, setPhysics] = useState(
     state.physics ?? { repulsion: 280, linkDistance: 85, clusterStrength: 0.12, collisionRadius: 26, iterations: 160 },
   );
   const [cursors, setCursors] = useState<Record<string, string | null>>({});
   const [context, setContext] = useState<{ id: string; x: number; y: number } | null>(null);
   const restoredFocus = useRef(false);
+  const overviewGeneration = useRef(0);
   const contextRef = useRef<HTMLDivElement | null>(null);
   const locateRef = useRef<HTMLDivElement | null>(null);
   const locateInputRef = useRef<HTMLInputElement | null>(null);
@@ -90,10 +90,13 @@ export default function GraphView({
   const effectiveState = useMemo(() => ({ ...state, physics }), [physics, state]);
 
   const overview = useCallback(async () => {
+    const generation = ++overviewGeneration.current;
     setLoading(true);
     try {
-      model.setClusterBy(clusterBy);
       const data = await loadGraphOverview(clusterBy);
+      if (generation !== overviewGeneration.current) return;
+      setContext(null);
+      model.setClusterBy(clusterBy);
       model.mergeOverview(data);
       seedClusters(model);
       model.restore(state);
@@ -103,10 +106,11 @@ export default function GraphView({
       setOverviewStatus(model.contentNodeCount() === 0 ? "empty" : "ready");
       setVersion((value) => value + 1);
     } catch (error) {
+      if (generation !== overviewGeneration.current) return;
       setOverviewStatus("error");
       throw error;
     } finally {
-      setLoading(false);
+      if (generation === overviewGeneration.current) setLoading(false);
     }
   }, [clusterBy, model, state]);
 
@@ -121,25 +125,6 @@ export default function GraphView({
         model.expand(id, firstPage);
         setCursors((current) => ({ ...current, [id]: firstPage.nextCursor }));
 
-        if (!nextPage && depth > 1) {
-          let frontier = firstPage.nodes
-            .filter((node) => node.type !== "root" && node.type !== "cluster")
-            .map((node) => node.id);
-          const visited = new Set<string>([id]);
-          for (let hop = 1; hop < depth && frontier.length > 0; hop += 1) {
-            const branchIds = [...new Set(frontier)].filter((nodeId) => !visited.has(nodeId)).slice(0, 25);
-            branchIds.forEach((nodeId) => visited.add(nodeId));
-            const pages = await Promise.all(
-              branchIds.map(async (nodeId) => ({ nodeId, page: await loadGraphNeighbors(nodeId, { limit: 50 }) })),
-            );
-            frontier = [];
-            for (const { nodeId, page } of pages) {
-              model.expand(nodeId, page);
-              setCursors((current) => ({ ...current, [nodeId]: page.nextCursor }));
-              frontier.push(...page.nodes.map((node) => node.id));
-            }
-          }
-        }
         settleLayout(model, effectiveState, reducedMotion);
         model.restore(state);
         model.setClusterBy(clusterBy);
@@ -148,13 +133,15 @@ export default function GraphView({
         setLoading(false);
       }
     },
-    [clusterBy, cursors, depth, effectiveState, model, reducedMotion, state],
+    [clusterBy, cursors, effectiveState, model, reducedMotion, state],
   );
 
   const collapse = useCallback(
     (id: string) => {
-      model.collapse(id);
-      setCursors((current) => ({ ...current, [id]: null }));
+      const collapsed = new Set(model.collapse(id));
+      setCursors((current) =>
+        Object.fromEntries(Object.entries(current).map(([key, value]) => [key, collapsed.has(key) ? null : value])),
+      );
       setVersion((value) => value + 1);
     },
     [model],
@@ -162,6 +149,9 @@ export default function GraphView({
 
   useEffect(() => {
     void overview().catch((error: Error) => toast(error.message, "error"));
+    return () => {
+      overviewGeneration.current += 1;
+    };
   }, [overview, toast]);
 
   useEffect(() => {
@@ -245,6 +235,15 @@ export default function GraphView({
     toast("Graph layout saved");
   };
 
+  const runAction = useCallback(
+    (action: () => Promise<unknown>): void => {
+      void action().catch((error: unknown) =>
+        toast(error instanceof Error ? error.message : "Graph action failed", "error"),
+      );
+    },
+    [toast],
+  );
+
   const fallbackNodes = model.graph.nodes().map((id) => {
     const attributes = model.graph.getNodeAttributes(id);
     return {
@@ -308,14 +307,14 @@ export default function GraphView({
           WebGL is unavailable. The accessible list view remains available; use a WebGL-capable browser for the
           interactive graph.
         </p>
-        <button onClick={() => void overview()}>Reload overview</button>
+        <button onClick={() => runAction(overview)}>Reload overview</button>
         <ul>
           {fallbackNodes.map((node) => (
             <li key={node.id}>
               <button
                 onClick={() => {
-                  if (node.type === "cluster") void expand(node.id, Boolean(cursors[node.id]));
-                  else if (node.type !== "root") void openRecord(node.id);
+                  if (node.type === "cluster") runAction(() => expand(node.id, Boolean(cursors[node.id])));
+                  else if (node.type !== "root") runAction(() => openRecord(node.id));
                 }}
               >
                 {node.label}
@@ -323,7 +322,7 @@ export default function GraphView({
               {model.expandedBranches().includes(node.id) && (
                 <button onClick={() => collapse(node.id)}>Collapse</button>
               )}
-              {cursors[node.id] && <button onClick={() => void expand(node.id, true)}>Load more</button>}
+              {cursors[node.id] && <button onClick={() => runAction(() => expand(node.id, true))}>Load more</button>}
             </li>
           ))}
         </ul>
@@ -341,14 +340,6 @@ export default function GraphView({
             <option value="space">Space</option>
             <option value="trust">Trust</option>
             <option value="sensitivity">Sensitivity</option>
-          </select>
-        </label>
-        <label>
-          Expand depth{" "}
-          <select value={depth} onChange={(event) => setDepth(Number(event.target.value))}>
-            <option value={1}>1 hop</option>
-            <option value={2}>2 hops</option>
-            <option value={3}>3 hops</option>
           </select>
         </label>
         <div className="graphLocate" ref={locateRef}>
@@ -404,7 +395,7 @@ export default function GraphView({
                     aria-selected={index === activeMatchIndex}
                     key={node.id}
                     onPointerMove={() => setActiveMatchIndex(index)}
-                    onClick={() => void selectSearchHit(node)}
+                    onClick={() => runAction(() => selectSearchHit(node))}
                   >
                     <span>{node.label}</span>
                     <small>{graphMatchContext(node)}</small>
@@ -420,19 +411,19 @@ export default function GraphView({
             ["Decisions", "decision direction chosen"],
             ["Recent", "recent memory"],
           ].map(([label, value]) => (
-            <button key={label} type="button" className="secondary" onClick={() => void search(value, false)}>
+            <button key={label} type="button" className="secondary" onClick={() => runAction(() => search(value, false))}>
               {label}
             </button>
           ))}
         </div>
-        <button className="secondary" onClick={() => void overview()} data-testid="collapse-overview">
+        <button className="secondary" onClick={() => runAction(overview)} data-testid="collapse-overview">
           Collapse to overview
         </button>
         <button
           className="secondary"
           disabled={readOnly}
           title={readOnly ? "Layout saving is unavailable while this workspace is read-only." : "Save this graph layout."}
-          onClick={() => void save()}
+          onClick={() => runAction(save)}
         >
           Save layout
         </button>
@@ -441,7 +432,7 @@ export default function GraphView({
         </span>
       </header>
       <nav className="graphBreadcrumbs" aria-label="Expanded graph branches">
-        <button onClick={() => void overview()}>Overview</button>
+        <button onClick={() => runAction(overview)}>Overview</button>
         {model.expandedBranches().map((id) => (
           <React.Fragment key={id}>
             <span>›</span>
@@ -495,8 +486,8 @@ export default function GraphView({
                   }}
                   onClick={() => {
                     setSelected(id);
-                    if (attributes.type === "cluster") void expand(id, Boolean(cursors[id]));
-                    else if (attributes.type !== "root") void openRecord(id);
+                    if (attributes.type === "cluster") runAction(() => expand(id, Boolean(cursors[id])));
+                    else if (attributes.type !== "root") runAction(() => openRecord(id));
                   }}
                 >
                   {attributes.rawLabel}
@@ -520,6 +511,7 @@ export default function GraphView({
           expand={expand}
           cursors={cursors}
           openRecord={openRecord}
+          runAction={runAction}
           setContext={setContext}
           closeMatches={closeMatches}
         />
@@ -528,7 +520,7 @@ export default function GraphView({
           <FullScreenControl />
         </ControlsContainer>
       </SigmaContainer>
-      {context && (
+      {context && model.graph.hasNode(context.id) && (
         <div
           ref={contextRef}
           className="graphContext"
@@ -540,7 +532,7 @@ export default function GraphView({
             <button
               role="menuitem"
               onClick={() => {
-                void expand(context.id, Boolean(cursors[context.id]));
+                runAction(() => expand(context.id, Boolean(cursors[context.id])));
                 setContext(null);
               }}
             >
@@ -571,7 +563,7 @@ export default function GraphView({
             <button
               role="menuitem"
               onClick={() => {
-                void openRecord(context.id);
+                runAction(() => openRecord(context.id));
                 setContext(null);
               }}
             >
@@ -581,7 +573,7 @@ export default function GraphView({
         </div>
       )}
       {selected && cursors[selected] && (
-        <button className="graphMore" onClick={() => void expand(selected, true)} data-testid="graph-more">
+        <button className="graphMore" onClick={() => runAction(() => expand(selected, true))} data-testid="graph-more">
           Load +N more
         </button>
       )}
@@ -599,6 +591,7 @@ function SigmaInteractions({
   expand,
   cursors,
   openRecord,
+  runAction,
   setContext,
   closeMatches,
 }: {
@@ -611,6 +604,7 @@ function SigmaInteractions({
   expand: (id: string, next?: boolean) => Promise<void>;
   cursors: Record<string, string | null>;
   openRecord: (id: string) => Promise<void>;
+  runAction: (action: () => Promise<unknown>) => void;
   setContext: (value: { id: string; x: number; y: number } | null) => void;
   closeMatches: () => void;
 }): null {
@@ -670,10 +664,10 @@ function SigmaInteractions({
         setSelected(node);
         const type = model.graph.getNodeAttribute(node, "type");
         if (type === "cluster" || Number(model.graph.getNodeAttribute(node, "remaining") ?? 0) > 0)
-          void expand(node, Boolean(cursors[node]));
-        else if (type !== "root") void openRecord(node);
+          runAction(() => expand(node, Boolean(cursors[node])));
+        else if (type !== "root") runAction(() => openRecord(node));
       },
-      doubleClickNode: ({ node }) => void openRecord(node),
+      doubleClickNode: ({ node }) => runAction(() => openRecord(node)),
       rightClickNode: ({ node, event }) => {
         event.preventSigmaDefault();
         const original = event.original as MouseEvent;
@@ -697,7 +691,7 @@ function SigmaInteractions({
       },
     });
     return clearLongPress;
-  }, [closeMatches, cursors, expand, model, openRecord, registerEvents, setContext, setSelected]);
+  }, [closeMatches, cursors, expand, model, openRecord, registerEvents, runAction, setContext, setSelected]);
   return null;
 }
 

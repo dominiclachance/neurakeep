@@ -96,6 +96,35 @@ test("routes stay viewport locked with no minimap", async ({ page }) => {
   }
 });
 
+test("working graph stays usable on the narrowest supported desktop", async ({ page }) => {
+  for (const width of [900, 1024]) {
+    await page.setViewportSize({ width, height: 950 });
+    await page.goto("/index.html#graph");
+    await expect(page.getByTestId("sigma-graph")).toBeVisible();
+    await expect(page.getByTestId("collapse-overview")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save layout" })).toBeVisible();
+    await expect.poll(() =>
+      page.locator(".sigmaToolbar").evaluate((toolbar) => toolbar.scrollWidth <= toolbar.clientWidth)
+    ).toBe(true);
+  }
+});
+
+test("cluster changes close stale node menus without crashing", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.goto("/index.html#graph");
+  await expect(page.getByTestId("sigma-graph")).toBeVisible();
+  await page.getByText("Keyboard node list").click();
+  const cluster = page.locator('[data-node-kind="cluster"]').first();
+  await expect(cluster).toBeVisible();
+  await cluster.click({ button: "right" });
+  await expect(page.getByRole("menu", { name: "Graph node actions" })).toBeVisible();
+  await page.getByLabel("Cluster by").selectOption("trust");
+  await expect(page.getByTestId("sigma-graph")).toBeVisible();
+  await expect(page.getByRole("menu", { name: "Graph node actions" })).toHaveCount(0);
+  expect(pageErrors).toEqual([]);
+});
+
 test("GA4 CTA events fire on hosted app interactions", async ({ page }) => {
   await page.addInitScript(() => {
     const events: unknown[][] = [];

@@ -120,14 +120,21 @@ export class GraphModel {
     this.evictOldestBranches(parentId);
   }
 
-  collapse(parentId: string): void {
+  collapse(parentId: string): string[] {
+    const collapsed = new Set<string>();
+    this.collapseBranch(parentId, collapsed);
+    return [...collapsed];
+  }
+
+  private collapseBranch(parentId: string, collapsed: Set<string>): void {
     const owned = this.branchNodes.get(parentId);
     if (!owned) return;
+    collapsed.add(parentId);
     this.branchNodes.delete(parentId);
     const index = this.branchOrder.indexOf(parentId);
     if (index >= 0) this.branchOrder.splice(index, 1);
     for (const id of owned) {
-      if (id !== parentId && this.branchNodes.has(id)) this.collapse(id);
+      if (id !== parentId && this.branchNodes.has(id)) this.collapseBranch(id, collapsed);
     }
     for (const id of owned) {
       if (!this.overviewIds.has(id) && !this.isOwnedElsewhere(id, parentId) && this.graph.hasNode(id))

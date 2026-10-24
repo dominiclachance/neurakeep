@@ -10,13 +10,14 @@ import { proposeCommand } from "./commands/propose.js";
 import { searchCommand } from "./commands/search.js";
 import { serveCommand } from "./commands/serve.js";
 import { statusCommand } from "./commands/status.js";
+import { NEURAKEEP_VERSION } from "../mcp/manifest.js";
 
 const program = new Command();
 
 program
   .name("umos")
   .description("NeuraKeep: local-first, source-cited memory for AI agents.")
-  .version("0.0.1");
+  .version(NEURAKEEP_VERSION);
 
 program
   .command("init")

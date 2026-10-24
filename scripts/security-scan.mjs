@@ -49,6 +49,10 @@ const privateCodePatterns = [
   { name: "Firebase browser implementation", regex: /firebase\/(?:app|auth)/g },
   { name: "Firebase token verification implementation", regex: /\bverifyIdToken\s*\(/g }
 ];
+const privateWorkspacePatterns = [
+  { name: "Windows user home path", regex: /\b[A-Za-z]:\\Users\\[^\\\s"'<>]+\\/g },
+  { name: "macOS user home path", regex: /\/Users\/[^/\s"'<>]+\//g }
+];
 const allowSecretFiles = new Set([".env.example"]);
 const allowPatternFiles = new Set(["scripts/security-scan.mjs"]);
 const scanExtensions = new Set([
@@ -93,6 +97,12 @@ for (const file of walk(root)) {
   }
   if (releaseMode) {
     for (const pattern of privateCodePatterns) {
+      pattern.regex.lastIndex = 0;
+      if (pattern.regex.test(text)) {
+        errors.push(`${pattern.name} in OSS release file ${rel}`);
+      }
+    }
+    for (const pattern of privateWorkspacePatterns) {
       pattern.regex.lastIndex = 0;
       if (pattern.regex.test(text)) {
         errors.push(`${pattern.name} in OSS release file ${rel}`);

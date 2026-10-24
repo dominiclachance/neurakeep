@@ -38,12 +38,7 @@ import {
 } from "./graphEngine.js";
 import { trackCtaEvent } from "./analytics.js";
 import { Markdown } from "./markdown.js";
-import {
-  managedIdentityConfigured,
-  signInWithEnterpriseProvider,
-  signInWithManagedIdentity,
-  signOutOfManagedIdentity,
-} from "./managedIdentityAuth.js";
+import { firebaseConfigured, signInWithEnterpriseProvider, signInWithFirebase, signOutOfFirebase } from "./firebaseAuth.js";
 import type {
   GraphEdge,
   GraphNode,
@@ -58,7 +53,6 @@ import type {
 import "./styles.css";
 
 const SigmaGraphView = React.lazy(() => import("./graph/GraphView.js"));
-const UniverseView = React.lazy(() => import("./graph/UniverseView.js"));
 
 const colors: Record<GraphNode["type"], string> = {
   root: "#d6b2ff",
@@ -74,7 +68,7 @@ const colors: Record<GraphNode["type"], string> = {
 const pinnedSearchPresets = [
   { name: "Failures", query: "do not repeat", filters: { memoryType: "failure", failuresOnly: true } },
   { name: "Decisions", query: "decision direction chosen", filters: { memoryType: "decision", failuresOnly: false } },
-  { name: "Promarkia", query: "Promarkia", filters: { project: "Promarkia", failuresOnly: false } },
+  { name: "Sources", query: "source provenance", filters: { failuresOnly: false } },
   { name: "NeuraKeep", query: "NeuraKeep memory graph", filters: { project: "NeuraKeep", failuresOnly: false } },
   {
     name: "Recent",
@@ -273,12 +267,26 @@ function App(): React.ReactElement {
     if (document.activeElement instanceof HTMLElement && !document.activeElement.closest('[role="dialog"]'))
       modalReturnFocusRef.current = document.activeElement;
     setModal({ title: id, body: <div className="meta">Loading record...</div> });
-    const data = await apiClient.mcp<{ record?: MemoryRecord }>("memory_read", { id });
-    const record = data.record;
-    setModal({
-      title: recordTitle(record, id),
-      body: <RecordView record={record} focusNode={focusNode} openRecord={openRecord} />,
-    });
+    try {
+      const data = await apiClient.mcp<{ record?: MemoryRecord }>("memory_read", { id });
+      const record = data.record;
+      setModal({
+        title: recordTitle(record, id),
+        body: <RecordView record={record} focusNode={focusNode} openRecord={openRecord} />,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Record could not be loaded";
+      setModal({
+        title: id,
+        body: (
+          <div className="viewCard">
+            <p>{message}</p>
+            <button onClick={() => void openRecord(id)}>Retry</button>
+          </div>
+        ),
+      });
+      toast(message, "error");
+    }
   };
 
   const focusNode = (id: string): void => {
@@ -334,7 +342,7 @@ function App(): React.ReactElement {
   };
 
   const logout = useCallback(async () => {
-    await signOutOfManagedIdentity().catch(() => null);
+    await signOutOfFirebase().catch(() => null);
     apiClient.setToken("");
     apiClient.setWorkspace();
     setAuth(null);
@@ -410,7 +418,7 @@ function App(): React.ReactElement {
           {[
             {
               label: "Explore",
-              routes: ["graph", ...(auth.flags?.graph.universe ? ["universe" as const] : []), "search"] as RouteName[],
+              routes: ["graph", "search"] as RouteName[],
             },
             { label: "Workflow", routes: ["inbox", "proposals", "quality"] as RouteName[] },
             { label: "System", routes: ["connect", "activity", "settings"] as RouteName[] },
@@ -573,7 +581,9 @@ function App(): React.ReactElement {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && runSearch()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void runSearch().catch((error) => toast(error.message, "error"));
+            }}
             placeholder="Search memory"
           />
           <button
@@ -629,25 +639,6 @@ function App(): React.ReactElement {
               readOnly={auth.readOnly}
             />
           </React.Suspense>
-        )}
-        {route === "universe" && auth.flags?.graph.universe && (
-          <React.Suspense fallback={<div className="viewSurface">Loading universe…</div>}>
-            <UniverseView openRecord={openRecord} toast={toast} readOnly={auth.readOnly} />
-          </React.Suspense>
-        )}
-        {route === "universe" && !auth.flags?.graph.universe && (
-          <section className="viewSurface">
-            <h2>Universe mode is disabled</h2>
-            <p>Enable the graph.universe feature flag, or return to the working graph.</p>
-            <button
-              onClick={() => {
-                window.location.hash = "graph";
-                setRoute("graph");
-              }}
-            >
-              Back to working graph
-            </button>
-          </section>
         )}
         {route === "search" && (
           <SearchView
@@ -2002,7 +1993,7 @@ function InboxView({
             <input
               value={manualPath}
               onChange={(event) => setManualPath(event.target.value)}
-              placeholder="C:\\Users\\macro\\Downloads\\paper.pdf"
+              placeholder="C:\\path\\to\\paper.pdf"
             />
           </label>
           <label>
@@ -2188,7 +2179,7 @@ function ConnectView({ toast }: { toast: (message: string, type?: Toast["type"])
     mcpServers: {
       neurakeep: {
         url: endpoint,
-        headers: { Authorization: "Bearer <agent-grant-or-managedIdentity-id-token>" },
+        headers: { Authorization: "Bearer <agent-grant-or-firebase-id-token>" },
       },
     },
   };
@@ -2696,7 +2687,7 @@ function SettingsView({
   const [integration, setIntegration] = useState<Record<string, any> | null>(null);
   const [dailyLoop, setDailyLoop] = useState<Record<string, any> | null>(null);
   const [ops, setOps] = useState<Record<string, any> | null>(null);
-  const [managedIdentityUser, setManagedIdentityUser] = useState("");
+  const [firebaseUser, setFirebaseUser] = useState("");
   useEffect(() => {
     apiClient
       .api<{ reports: Array<Record<string, unknown>> }>("/api/extraction/reports")
@@ -2750,18 +2741,18 @@ function SettingsView({
     setDailyLoop(result.status ?? result);
     toast("Daily workflow queued summary and synced workspace memory");
   };
-  const managedIdentityLogin = async (): Promise<void> => {
-    const result = await signInWithManagedIdentity();
+  const firebaseLogin = async (): Promise<void> => {
+    const result = await signInWithFirebase();
     apiClient.setToken(result.token);
-    setManagedIdentityUser(result.user?.email ?? result.user?.displayName ?? "Google user");
+    setFirebaseUser(result.user?.email ?? result.user?.displayName ?? "Google user");
     const next = await authSettings();
     setAuth(next);
     toast("Google sign-in connected");
   };
-  const managedIdentityLogout = async (): Promise<void> => {
-    await signOutOfManagedIdentity();
+  const firebaseLogout = async (): Promise<void> => {
+    await signOutOfFirebase();
     apiClient.setToken("");
-    setManagedIdentityUser("");
+    setFirebaseUser("");
     toast("Google session cleared");
   };
   return (
@@ -2782,15 +2773,15 @@ function SettingsView({
           </label>
           <div className="proposalTools">
             <button
-              disabled={!managedIdentityConfigured()}
+              disabled={!firebaseConfigured()}
               title={
-                managedIdentityConfigured()
-                  ? "Continue with Google through ManagedIdentity Auth."
-                  : "Set VITE_MANAGED_IDENTITY_* public client config before building the hosted web app."
+                firebaseConfigured()
+                  ? "Continue with Google through Firebase Auth."
+                  : "Set VITE_FIREBASE_* public client config before building the hosted web app."
               }
               onClick={() => {
                 trackCtaEvent("hosted_login_click", { section: "settings", method: "google" });
-                managedIdentityLogin()
+                firebaseLogin()
                   .then(() => trackCtaEvent("login", { section: "settings", method: "google" }))
                   .catch((error) => toast(error.message, "error"));
               }}
@@ -2800,15 +2791,15 @@ function SettingsView({
             <button
               onClick={() => {
                 trackCtaEvent("hosted_logout_click", { section: "settings" });
-                managedIdentityLogout().catch((error) => toast(error.message, "error"));
+                firebaseLogout().catch((error) => toast(error.message, "error"));
               }}
             >
               Sign out
             </button>
           </div>
           <div className="meta">
-            {managedIdentityConfigured()
-              ? `Google sign-in is secured by ManagedIdentity Auth${managedIdentityUser ? ` / ${managedIdentityUser}` : ""}`
+            {firebaseConfigured()
+              ? `Google sign-in is secured by Firebase Auth${firebaseUser ? ` / ${firebaseUser}` : ""}`
               : "Google sign-in config is not present in this build. Local mode still works."}
           </div>
           <label>
@@ -3180,7 +3171,7 @@ function AuthGate({
     trackCtaEvent("hosted_login_click", { section: "auth_gate", method: "google" });
     setBusy(true);
     try {
-      const result = await signInWithManagedIdentity();
+      const result = await signInWithFirebase();
       apiClient.setToken(result.token);
       await onAuthenticated();
       trackCtaEvent("login", { section: "auth_gate", method: "google" });
@@ -3226,7 +3217,7 @@ function AuthGate({
         <h2>Sign in to hosted NeuraKeep</h2>
         <p>Use Google for a personal or Team account, or discover your organization&apos;s SAML/OIDC sign-in.</p>
         <button
-          disabled={!managedIdentityConfigured() || busy}
+          disabled={!firebaseConfigured() || busy}
           onClick={() =>
             login().catch((loginError) =>
               toast(loginError instanceof Error ? loginError.message : "Google sign-in failed", "error"),
@@ -3262,9 +3253,9 @@ function AuthGate({
           ))}
         </div>
         <div className="meta">
-          {managedIdentityConfigured()
-            ? "ManagedIdentity verifies every Google, SAML, and OIDC ID token before workspace authorization."
-            : "ManagedIdentity client config is missing from this build."}
+          {firebaseConfigured()
+            ? "Firebase verifies every Google, SAML, and OIDC ID token before workspace authorization."
+            : "Firebase client config is missing from this build."}
         </div>
         <details>
           <summary>Use an autonomous-agent grant</summary>
@@ -3459,11 +3450,11 @@ function HostedCard({ auth }: { auth: AuthSettings | null }): React.ReactElement
         <div className="chips">
           <span>{hosted?.enabled ? "enabled" : "disabled"}</span>
           <span>{hosted?.authProvider ?? "local"}</span>
-          <span>{hosted?.managedIdentityProjectId ?? "no ManagedIdentity project"}</span>
+          <span>{hosted?.firebaseProjectId ?? "no Firebase project"}</span>
           <span>{hosted?.tenantId ?? "account pending"}</span>
         </div>
         <div className="meta">
-          Hosted mode uses ManagedIdentity-verified identity, a separately encrypted space vault, expiring MCP grants, BillingProvider
+          Hosted mode uses Firebase-verified identity, a separately encrypted space vault, expiring MCP grants, BillingProvider
           entitlements, and server-side audit events. NeuraKeep decrypts the selected space in its authorized runtime
           while serving you or your autonomous agent; autonomous spaces are not zero-knowledge.
         </div>
@@ -3488,9 +3479,9 @@ function HostedAccessTokensCard({ auth }: { auth: AuthSettings | null }): React.
     [],
   );
   useEffect(() => {
-    if (auth?.provider === "managedIdentity") void refresh();
+    if (auth?.provider === "firebase") void refresh();
   }, [auth?.provider, refresh]);
-  if (auth?.provider !== "managedIdentity") return <></>;
+  if (auth?.provider !== "firebase") return <></>;
   const create = async (): Promise<void> => {
     const scopes: HostedAccessToken["scopes"] = [
       "memory:read",
@@ -4378,15 +4369,13 @@ function routeLabel(value: RouteName): string {
   if (value === "proposals") return "Props";
   if (value === "connect") return "MCP";
   if (value === "activity") return "Audit";
-  if (value === "universe") return "Universe";
   return value.slice(0, 1).toUpperCase() + value.slice(1);
 }
 
 function routeFromHash(): RouteName {
   const route = window.location.hash.replace(/^#/, "");
   if (route === "props") return "proposals";
-  if (window.location.pathname === "/app/universe") return "universe";
-  return ["graph", "universe", "search", "inbox", "proposals", "connect", "activity", "quality", "settings"].includes(
+  return ["graph", "search", "inbox", "proposals", "connect", "activity", "quality", "settings"].includes(
     route,
   )
     ? (route as RouteName)
@@ -4458,4 +4447,32 @@ interface SearchFilters {
   failuresOnly: boolean;
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+class AppErrorBoundary extends React.Component<React.PropsWithChildren, { error: Error | null }> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error): { error: Error } {
+    return { error };
+  }
+
+  render(): React.ReactNode {
+    if (!this.state.error) return this.props.children;
+    return (
+      <section className="graphState graphStateError" role="alert">
+        <div>
+          <span className="graphStateKicker">NeuraKeep workspace</span>
+          <h1>The interface stopped unexpectedly</h1>
+          <p>Your vault is unchanged. Reload the app to reconnect to the local service.</p>
+          <button type="button" onClick={() => window.location.reload()}>
+            Reload workspace
+          </button>
+        </div>
+      </section>
+    );
+  }
+}
+
+createRoot(document.getElementById("root")!).render(
+  <AppErrorBoundary>
+    <App />
+  </AppErrorBoundary>,
+);

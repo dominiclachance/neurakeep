@@ -1,5 +1,4 @@
-export type RouteName =
-  "graph" | "universe" | "search" | "inbox" | "proposals" | "connect" | "activity" | "quality" | "settings";
+export type RouteName = "graph" | "search" | "inbox" | "proposals" | "connect" | "activity" | "quality" | "settings";
 
 export interface GraphNode {
   id: string;
