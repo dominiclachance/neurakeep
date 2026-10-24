@@ -15,7 +15,7 @@
     "release:check": "node scripts/release-check.mjs",
     "dev": "tsx src/cli/index.ts",
     "dev:web": "vite --host 127.0.0.1 --port 5176",
-    "e2e": "npm run build:all && node dist/cli/index.js init --root .umos && node dist/cli/index.js app --root .umos && playwright test",
+    "e2e": "npm run build:all && node tests/prepare-e2e.mjs && playwright test",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run release:check && npm run typecheck && npm run build:all && npm test"
