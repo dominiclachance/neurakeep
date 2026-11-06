@@ -83,6 +83,25 @@ describe("MCP static server card", () => {
     expect(packageJson.version).toBe(NEURAKEEP_VERSION);
   });
 
+  it("declares OAuth dynamic client registration for the OpenAI directory", () => {
+    const manifest = JSON.parse(
+      readFileSync(join("distribution", "openai", "neurakeep", "mcp.json"), "utf8")
+    ) as {
+      mcpServers: {
+        neurakeep: { extensions: { "com.openai": { auth: unknown } } };
+      };
+    };
+    expect(manifest.mcpServers.neurakeep.extensions["com.openai"].auth).toEqual({
+      type: "oauth",
+      client: { mode: "dcr" },
+      authorizationUrl: "https://www.neurakeep.com/oauth/authorize",
+      tokenUrl: "https://www.neurakeep.com/oauth/token",
+      registrationUrl: "https://www.neurakeep.com/oauth/register",
+      resource: "https://www.neurakeep.com/mcp",
+      baseScopes: ["memory:read", "memory:propose", "memory:apply"]
+    });
+  });
+
   it("does not answer JSON-RPC notifications and does not advertise command execution", () => {
     const projectDir = mkdtempSync(join(tmpdir(), "neurakeep-notification-"));
     tempRoots.push(projectDir);

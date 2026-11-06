@@ -3,7 +3,22 @@
   "mcpServers": {
     "neurakeep": {
       "type": "streamable-http",
-      "url": "https://www.neurakeep.com/mcp"
+      "url": "https://www.neurakeep.com/mcp",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "dcr"
+            },
+            "authorizationUrl": "https://www.neurakeep.com/oauth/authorize",
+            "tokenUrl": "https://www.neurakeep.com/oauth/token",
+            "registrationUrl": "https://www.neurakeep.com/oauth/register",
+            "resource": "https://www.neurakeep.com/mcp",
+            "baseScopes": ["memory:read", "memory:propose", "memory:apply"]
+          }
+        }
+      }
     }
   }
 }
