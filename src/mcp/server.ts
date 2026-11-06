@@ -110,7 +110,7 @@ function callTool(
       neighbors: numberArg(args.neighbors, 0),
       space: optionalString(args.space) as never,
       project: optionalString(args.project),
-      includeSecret: Boolean(args.include_secret)
+      includeSecret: false
     });
     return content({ results, guidance: retrievalGuidance(results) });
   }

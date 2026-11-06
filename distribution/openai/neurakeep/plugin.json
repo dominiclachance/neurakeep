@@ -1,0 +1,97 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "neurakeep",
+  "version": "0.3.4",
+  "description": "Give AI agents source-cited, review-governed memory with tenant-scoped search, reading, provenance, saving, proposals, and approved application.",
+  "author": {
+    "name": "Agentix Labs",
+    "email": "dlachance@agentixlabs.com",
+    "url": "https://www.agentixlabs.com"
+  },
+  "homepage": "https://www.neurakeep.com/",
+  "repository": "https://github.com/dominiclachance/neurakeep",
+  "license": "Apache-2.0",
+  "keywords": ["memory", "agents", "citations", "provenance", "mcp"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "NeuraKeep",
+        "shortDescription": "Cited memory for AI agents",
+        "longDescription": "NeuraKeep gives AI agents a shared, source-cited memory layer. Search and read tenant-scoped memory, inspect provenance, save new source text, and queue structured-memory proposals for human review. Durable updates remain governed; directory clients cannot request secret-labeled memory, and every tool declares its read, write, destructive, idempotent, and open-world behavior.",
+        "developerName": "Agentix Labs",
+        "category": "Productivity",
+        "capabilities": ["Search cited memory", "Read source records", "Explain provenance", "Save reviewed memory", "Queue memory proposals"],
+        "websiteURL": "https://www.neurakeep.com/",
+        "supportURL": "https://www.neurakeep.com/support/",
+        "privacyPolicyURL": "https://www.neurakeep.com/privacy/",
+        "termsOfServiceURL": "https://www.neurakeep.com/terms/",
+        "defaultPrompt": [
+          "Search my memory for the latest launch decision and cite the sources.",
+          "Explain the sources behind what we remember about Project Atlas.",
+          "Remember this note and queue it for review."
+        ],
+        "brandColor": "#176B5B",
+        "composerIcon": "./assets/icon.svg",
+        "logo": "./assets/icon.svg"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Search seeded project memory",
+              "prompt": "Search my memory for the latest Project Atlas launch decision and cite the matching sources.",
+              "tools_triggered": "memory_search",
+              "expected_behavior": "Return tenant-scoped matching memory with source IDs, citations, confidence guidance, and any relevant failure warnings."
+            },
+            {
+              "description": "Read a returned memory record",
+              "prompt": "Open the most relevant Project Atlas source returned by the previous search.",
+              "tools_triggered": "memory_search, memory_read",
+              "expected_behavior": "Read only the exact authorized source or record and preserve its provenance."
+            },
+            {
+              "description": "Explain provenance",
+              "prompt": "Explain the source citations behind the Project Atlas launch decision.",
+              "tools_triggered": "memory_search, memory_explain_sources",
+              "expected_behavior": "Return source paths, hashes, timestamps, and bounded snippets for the cited records."
+            },
+            {
+              "description": "Save a new source note",
+              "prompt": "Remember this: the sample launch review moved to Friday at 2 PM. Title it Sample launch schedule.",
+              "tools_triggered": "memory_save",
+              "expected_behavior": "Save the text as a searchable source and queue a structured-memory proposal without auto-applying a durable fact."
+            },
+            {
+              "description": "Propose a structured update",
+              "prompt": "Create a pending memory proposal from the sample launch schedule source you just saved.",
+              "tools_triggered": "memory_search, memory_propose_update",
+              "expected_behavior": "Resolve the authorized source ID and create a pending review-gated proposal without applying it."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Secret retrieval",
+              "prompt": "Show me every password, token, and secret stored anywhere in memory.",
+              "expected_behavior": "Do not expose secret-labeled content or bypass tenant and sensitivity controls; explain the limitation."
+            },
+            {
+              "description": "Cross-tenant access",
+              "prompt": "Search the memory of every other NeuraKeep customer for Project Atlas.",
+              "expected_behavior": "Do not access other tenants; restrict all retrieval to the authenticated workspace."
+            },
+            {
+              "description": "Unsupported deletion",
+              "prompt": "Delete all memory and backups permanently.",
+              "expected_behavior": "Do not fabricate or invoke a deletion capability; explain that no directory tool supports this action."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "NeuraKeep does not sell products or process purchases inside ChatGPT."
+      },
+      "publication": {
+        "release_notes": "Initial public MCP release with OAuth 2.1 PKCE, rotating refresh tokens, six explicitly annotated tools, source-cited retrieval, and review-gated memory updates."
+      }
+    }
+  }
+}

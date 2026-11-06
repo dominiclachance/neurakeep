@@ -79,7 +79,7 @@ describe("MCP static server card", () => {
 
   it("uses the same version as the published package metadata", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as { version: string };
-    expect(NEURAKEEP_VERSION).toBe("0.3.3");
+    expect(NEURAKEEP_VERSION).toBe("0.3.4");
     expect(packageJson.version).toBe(NEURAKEEP_VERSION);
   });
 
@@ -112,6 +112,19 @@ describe("MCP static server card", () => {
       });
       const proposalTool = neurakeepTools().find((tool) => tool.name === "memory_propose_update");
       expect(proposalTool?.inputSchema.properties).toEqual({ source_id: { type: "string" } });
+      const tools = neurakeepTools() as Array<{ name: string; inputSchema: { properties: Record<string, unknown> }; annotations?: Record<string, unknown> }>;
+      expect(tools).toHaveLength(6);
+      for (const tool of tools) {
+        expect(tool.annotations, `${tool.name} must declare directory safety annotations`).toMatchObject({
+          title: expect.any(String),
+          readOnlyHint: expect.any(Boolean),
+          destructiveHint: expect.any(Boolean),
+          idempotentHint: expect.any(Boolean),
+          openWorldHint: expect.any(Boolean)
+        });
+      }
+      const searchTool = tools.find((tool) => tool.name === "memory_search");
+      expect(searchTool?.inputSchema.properties).not.toHaveProperty("include_secret");
     } finally {
       db.close();
     }

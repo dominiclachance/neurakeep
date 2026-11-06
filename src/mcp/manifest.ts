@@ -1,4 +1,4 @@
-export const NEURAKEEP_VERSION = "0.3.3";
+export const NEURAKEEP_VERSION = "0.3.4";
 
 export const NEURAKEEP_SERVER_INFO = {
   name: "neurakeep",
@@ -16,10 +16,16 @@ const toolDefinitions: Array<Record<string, unknown>> = [
         limit: { type: "number" },
         neighbors: { type: "number" },
         space: { type: "string" },
-        project: { type: "string" },
-        include_secret: { type: "boolean" }
+        project: { type: "string" }
       },
       required: ["query"]
+    },
+    annotations: {
+      title: "Search memory",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
     }
   },
   {
@@ -29,6 +35,13 @@ const toolDefinitions: Array<Record<string, unknown>> = [
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"]
+    },
+    annotations: {
+      title: "Read memory record",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
     }
   },
   {
@@ -38,6 +51,13 @@ const toolDefinitions: Array<Record<string, unknown>> = [
       type: "object",
       properties: { source_ids: { type: "array", items: { type: "string" } } },
       required: ["source_ids"]
+    },
+    annotations: {
+      title: "Explain memory sources",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
     }
   },
   {
@@ -68,6 +88,13 @@ const toolDefinitions: Array<Record<string, unknown>> = [
         source_id: { type: "string" }
       },
       required: ["source_id"]
+    },
+    annotations: {
+      title: "Propose memory update",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false
     }
   },
   {
@@ -77,6 +104,13 @@ const toolDefinitions: Array<Record<string, unknown>> = [
       type: "object",
       properties: { proposal_id: { type: "string" } },
       required: ["proposal_id"]
+    },
+    annotations: {
+      title: "Apply approved memory update",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false
     }
   }
 ];
