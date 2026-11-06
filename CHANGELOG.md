@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.4 - 2026-11-05
+
+### Added
+
+- Added explicit read, write, destructive, idempotency, and open-world annotations to all six MCP tools.
+- Added a schema-validated OpenAI plugin submission package for the hosted NeuraKeep MCP service.
+
+### Changed
+
+- Hosted directory clients can no longer request secret-labeled memory through `memory_search`.
+- Package, MCP server card, and MCP registry metadata now consistently report version 0.3.4.
+
 ## 0.3.3 - 2026-10-24
 
 ### Added

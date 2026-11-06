@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">NeuraKeep icon</title><desc id="desc">A shield-shaped memory mark with connected nodes.</desc>
+  <defs><linearGradient id="g" x1="18" x2="110" y1="14" y2="116" gradientUnits="userSpaceOnUse"><stop stop-color="#62D6A3"/><stop offset=".55" stop-color="#4BA3FF"/><stop offset="1" stop-color="#C6B1FF"/></linearGradient></defs>
+  <rect width="128" height="128" rx="28" fill="#101416"/><path d="M64 14 105 30v31c0 27-16 45-41 55C39 106 23 88 23 61V30l41-16Z" fill="#151D22" stroke="url(#g)" stroke-width="5"/>
+  <circle cx="64" cy="38" r="8" fill="#62D6A3"/><circle cx="42" cy="64" r="8" fill="#4BA3FF"/><circle cx="86" cy="64" r="8" fill="#C6B1FF"/><circle cx="64" cy="90" r="8" fill="#F0D56B"/><path d="M58 42 47 58M70 42l11 16M48 68l12 17M80 68 68 85M50 64h28" fill="none" stroke="#EAF2F3" stroke-width="5" stroke-linecap="round"/>
+</svg>

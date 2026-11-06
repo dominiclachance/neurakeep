@@ -1,6 +1,6 @@
 {
   "name": "neurakeep",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "NeuraKeep: local-first, source-cited memory for AI agents.",
   "type": "module",
   "bin": {
