@@ -149,6 +149,28 @@ describe("MCP static server card", () => {
     }
   });
 
+  it("advertises the least-privilege OAuth scope for every protected tool", () => {
+    const expectedScopes: Record<string, string[]> = {
+      memory_search: ["memory:read"],
+      memory_read: ["memory:read"],
+      memory_explain_sources: ["memory:read"],
+      memory_save: ["memory:propose"],
+      memory_propose_update: ["memory:propose"],
+      memory_apply_update: ["memory:apply"]
+    };
+    const tools = neurakeepTools() as Array<{
+      name: string;
+      _meta?: { securitySchemes?: Array<{ type: string; scopes: string[] }> };
+    }>;
+
+    expect(tools).toHaveLength(Object.keys(expectedScopes).length);
+    for (const tool of tools) {
+      expect(tool._meta?.securitySchemes, `${tool.name} must advertise its OAuth requirement`).toEqual([
+        { type: "oauth2", scopes: expectedScopes[tool.name] }
+      ]);
+    }
+  });
+
   it("saves new text as searchable memory and queues one review-gated proposal", () => {
     const projectDir = mkdtempSync(join(tmpdir(), "neurakeep-save-memory-"));
     tempRoots.push(projectDir);
