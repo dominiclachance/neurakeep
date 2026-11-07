@@ -10,6 +10,8 @@
 ### Changed
 
 - Hosted directory clients can no longer request secret-labeled memory through `memory_search`.
+- Every protected tool now advertises its least-privilege OAuth scope to directory clients.
+- Directory guidance now forbids automatic Claude or ChatGPT conversation-history ingestion and limits saves to explicit user requests.
 - Package, MCP server card, and MCP registry metadata now consistently report version 0.3.4.
 
 ## 0.3.3 - 2026-10-24

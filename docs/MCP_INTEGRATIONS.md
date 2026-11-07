@@ -52,6 +52,8 @@ Use stdio MCP for local agent memory. The command should point at the built CLI:
 
 For requests such as "remember this," agents should call `memory_save`. The source is searchable immediately, while extracted facts stay queue-first and review-gated. Use `memory_propose_update` only when the source is already ingested and its `source_id` is known.
 
+Directory clients must never automatically collect, scan, or import Claude, ChatGPT, or other conversation history. Call `memory_save` only for specific content the user explicitly asks NeuraKeep to remember.
+
 ## Claude Code
 
 Use:

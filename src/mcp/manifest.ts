@@ -5,9 +5,18 @@ export const NEURAKEEP_SERVER_INFO = {
   version: NEURAKEEP_VERSION
 } as const;
 
+function oauthToolMeta(scope: "memory:read" | "memory:propose" | "memory:apply"): Record<string, unknown> {
+  return {
+    _meta: {
+      securitySchemes: [{ type: "oauth2", scopes: [scope] }]
+    }
+  };
+}
+
 const toolDefinitions: Array<Record<string, unknown>> = [
   {
     name: "memory_search",
+    ...oauthToolMeta("memory:read"),
     description: "Search NeuraKeep memory with citations, confidence guidance, related failure warnings, and optional neighbor context.",
     inputSchema: {
       type: "object",
@@ -30,6 +39,7 @@ const toolDefinitions: Array<Record<string, unknown>> = [
   },
   {
     name: "memory_read",
+    ...oauthToolMeta("memory:read"),
     description: "Read a source, section, fact, event, failure, or proposal by ID.",
     inputSchema: {
       type: "object",
@@ -46,6 +56,7 @@ const toolDefinitions: Array<Record<string, unknown>> = [
   },
   {
     name: "memory_explain_sources",
+    ...oauthToolMeta("memory:read"),
     description: "Explain source citations, hashes, paths, timestamps, and snippets.",
     inputSchema: {
       type: "object",
@@ -62,6 +73,7 @@ const toolDefinitions: Array<Record<string, unknown>> = [
   },
   {
     name: "memory_save",
+    ...oauthToolMeta("memory:propose"),
     description: "Save or remember new text in NeuraKeep. The source becomes searchable immediately and a structured-memory proposal is queued for human review; this tool never auto-applies durable facts.",
     inputSchema: {
       type: "object",
@@ -81,6 +93,7 @@ const toolDefinitions: Array<Record<string, unknown>> = [
   },
   {
     name: "memory_propose_update",
+    ...oauthToolMeta("memory:propose"),
     description: "Create a pending structured-memory proposal from an existing ingested source_id. Use memory_save when the user gives you new text to remember.",
     inputSchema: {
       type: "object",
@@ -99,6 +112,7 @@ const toolDefinitions: Array<Record<string, unknown>> = [
   },
   {
     name: "memory_apply_update",
+    ...oauthToolMeta("memory:apply"),
     description: "Apply a pending proposal into durable memory and compile the wiki.",
     inputSchema: {
       type: "object",
